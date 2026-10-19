@@ -1,0 +1,1267 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Кодування графіки та звуку</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Onest:wght@400;500;700;800&display=swap">
+<style>
+/* Layout: один вертикальний урок з шістьма етапами + картка результатів для здачі.
+   Палітра: холодний папір, чорнильний синьо-фіолетовий, один ультрамариновий акцент.
+   Шрифти: Onest 800 (заголовки), Onest (текст), JetBrains Mono (біти). */
+:root{
+  --bg:#F2F4FA; --panel:#FFFFFF; --ink:#151936; --ink2:#4B5278; --line:#CDD3E8; --edge:#151936;
+  --accent:#2B3AE6; --accent-ink:#FFFFFF; --soft:#E4E8FB; --gridline:#D5DAEC;
+  --ok:#0A8A5A; --bad:#D2323F; --warn:#9A6200;
+  --display:'Onest',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --body:'Onest',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D1021; --panel:#161A33; --ink:#F1F3FF; --ink2:#B4BBE0; --line:#2C3360; --edge:#6670C4;
+    --accent:#8F99FF; --accent-ink:#0D1021; --soft:#222956; --gridline:#2B3260;
+    --ok:#3DDC97; --bad:#FF7C87; --warn:#F2B84B; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D1021; --panel:#161A33; --ink:#F1F3FF; --ink2:#B4BBE0; --line:#2C3360; --edge:#6670C4;
+  --accent:#8F99FF; --accent-ink:#0D1021; --soft:#222956; --gridline:#2B3260;
+  --ok:#3DDC97; --bad:#FF7C87; --warn:#F2B84B; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--body);padding-inline:16px;padding-block:0 72px}
+.wrap{max-width:900px;margin-inline:auto}
+h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1.15;text-wrap:balance;margin:0;color:var(--ink)}
+h1{font-size:clamp(2.2rem,8vw,3.6rem);letter-spacing:-.01em}
+h2{font-size:clamp(1.5rem,5vw,2.1rem)}
+h3{font-size:1.3rem;margin-bottom:10px}
+p{margin:0 0 12px;max-width:68ch}
+code,pre,.mono{font-family:var(--mono)}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.eyebrow{font:700 13px/1.2 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin:0 0 10px}
+
+/* nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:2px solid var(--edge);margin-inline:-16px;padding-inline:16px}
+.nav ul{display:flex;gap:6px;overflow-x:auto;list-style:none;margin:0 auto;padding:8px 0;max-width:900px}
+.nav a{display:block;white-space:nowrap;text-decoration:none;color:var(--ink);font:700 14px/1 var(--body);padding:9px 12px;border:2px solid transparent}
+.nav a:hover{border-color:var(--edge)}
+.nav small{font:400 11px var(--mono);color:var(--ink2);margin-left:6px}
+
+/* hero */
+.hero{display:flex;flex-wrap:wrap;gap:28px 40px;align-items:center;padding-block:36px 28px}
+.hero-text{flex:1 1 380px;min-width:0}
+.hero-text .lead{font-size:1.1rem;margin-top:14px}
+.hero-art{flex:0 1 auto;display:flex;gap:16px;align-items:center;min-width:0}
+.mini{display:grid;grid-template-columns:repeat(8,18px);gap:1px;background:var(--gridline);border:2px solid var(--edge)}
+.mini i{width:18px;height:18px;background:#fff}
+.mini i.on{background:#000}
+.hero-art pre{margin:0;font-size:12px;line-height:18px;color:var(--ink2)}
+.goals{margin:18px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.goals li{padding-left:22px;position:relative}
+.goals li::before{content:"";position:absolute;left:0;top:.5em;width:10px;height:10px;background:var(--accent)}
+
+/* stages */
+.stage{padding-block:44px 8px;border-top:2px solid var(--edge);margin-top:36px;scroll-margin-top:60px}
+.stage>h2{margin-bottom:18px;background:var(--accent);color:var(--accent-ink);padding:10px 16px;width:fit-content;max-width:100%}
+.rule{background:var(--soft);border-left:6px solid var(--accent);padding:12px 16px;margin:14px 0;max-width:68ch}
+.rule p{margin:0}
+.rule p+p{margin-top:6px}
+
+/* lab */
+.lab{background:var(--panel);border:2px solid var(--edge);box-shadow:6px 6px 0 var(--accent);padding:18px;margin:20px 6px 26px 0}
+.lab>h3{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.lab .tag{font:700 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);background:var(--accent);padding:4px 8px}
+.card{background:var(--panel);border:1.5px solid var(--line);padding:16px;min-width:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:16px 0}
+.row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.row>*{min-width:0}
+.muted{color:var(--ink2)}
+.small{font-size:.9rem}
+.ok{color:var(--ok);font-weight:700}
+.bad{color:var(--bad);font-weight:700}
+.warnc{color:var(--warn);font-weight:700}
+
+/* controls */
+.btn{font:500 15px/1 var(--body);background:var(--panel);color:var(--ink);border:2px solid var(--edge);padding:10px 14px;cursor:pointer;border-radius:2px}
+.btn:hover{background:var(--soft)}
+.btn:active{transform:translate(1px,1px)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn[aria-pressed="true"],.btn.sel{background:var(--ink);color:var(--bg)}
+.btn.sm{padding:7px 10px;font-size:14px}
+input[type=number],input[type=text],select,textarea{font:inherit;background:var(--panel);color:var(--ink);border:2px solid var(--edge);padding:7px 9px;border-radius:2px;max-width:100%}
+input[type=number]{width:110px;font-family:var(--mono)}
+textarea{width:100%;min-height:90px}
+input[type=range]{accent-color:var(--accent);width:100%;min-width:0}
+label{font-weight:500}
+table{border-collapse:collapse;width:100%}
+th,td{border:1.5px solid var(--line);padding:8px 10px;text-align:left;vertical-align:middle}
+th{background:var(--soft);font-weight:700;font-size:.9rem}
+.tablewrap{overflow-x:auto;max-width:100%}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* who */
+.who{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px 18px}
+.who label{display:flex;flex-direction:column;gap:4px}
+.who input{width:100%}
+
+/* warm-up bits */
+.bits{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;max-width:560px}
+.bitbtn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;background:var(--panel);color:var(--ink);border:2px solid var(--edge);cursor:pointer;font-family:var(--mono);border-radius:2px}
+.bitbtn .w{font-size:12px;color:var(--ink2)}
+.bitbtn .v{font-size:1.6rem;font-weight:700}
+.bitbtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.bitbtn[aria-pressed="true"] .w{color:var(--accent-ink)}
+.readout{display:flex;flex-wrap:wrap;gap:6px 22px;margin:14px 0 4px;font-family:var(--mono)}
+.readout b{font-size:1.25rem}
+
+/* flow */
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;list-style:none;padding:0;margin:16px 0}
+.flow li{position:relative;background:var(--panel);border:1.5px solid var(--line);padding:12px;font-size:.95rem}
+.flow li b{display:block;font-weight:800;font-size:1.05rem;margin-bottom:2px}
+.flow li code{display:block;margin-top:6px;color:var(--accent);word-break:break-all}
+.cloze{line-height:2.4;max-width:70ch}
+.cloze select{margin-inline:4px}
+.cloze select.right{border-color:var(--ok)}
+.cloze select.wrong{border-color:var(--bad)}
+
+/* pixel grid */
+.pgrid{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:1px;background:var(--gridline);border:2px solid var(--edge);width:min(100%,360px);aspect-ratio:1;touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair;flex:0 0 auto}
+.pgrid .cell{min-height:0;min-width:0;background:#fff}
+.pal{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.sw{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:2px solid transparent;padding:3px;cursor:pointer;color:var(--ink);font:400 11px var(--mono)}
+.sw i{display:block;width:30px;height:30px;border:2px solid var(--edge)}
+.sw[aria-pressed="true"]{border-color:var(--accent);background:var(--soft)}
+.codebox{font-size:12.5px;line-height:1.55;background:var(--bg);border:1.5px solid var(--line);padding:10px;margin:0;overflow-x:auto;max-width:100%;white-space:pre}
+.lab-cols{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.lab-cols>.side{flex:1 1 260px;min-width:0}
+.stat{font-family:var(--mono);margin:10px 0 0}
+.stat b{color:var(--accent)}
+
+/* zoom */
+.zoomrow{display:flex;flex-wrap:wrap;gap:20px;margin-top:10px}
+.zbox{flex:1 1 220px;min-width:0}
+.zview{width:min(100%,220px);aspect-ratio:1;overflow:hidden;border:2px solid var(--edge);background:#fff;position:relative}
+.zview>.inner{position:absolute;inset:0;transform-origin:76.5% 23.5%}
+.zview canvas,.zview svg{width:100%;height:100%;display:block}
+.zview canvas{image-rendering:pixelated}
+
+/* rgb */
+.chrow{display:grid;grid-template-columns:28px minmax(0,1fr) 44px;gap:6px 12px;align-items:center;margin-bottom:8px}
+.chrow .bn{grid-column:2 / 4;font-size:13px;color:var(--ink2);margin-top:-4px}
+.chn{font:700 14px var(--mono);text-align:center;color:#fff;padding:3px 0}
+.chn.r{background:#D8212E}.chn.g{background:#12853F}.chn.b{background:#2447D6}
+.sws{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.big{width:120px;height:92px;border:2px solid var(--edge);display:flex;align-items:center;justify-content:center;font:700 12px var(--mono);color:#fff;text-shadow:0 0 3px #000}
+.big.q{background:repeating-linear-gradient(45deg,var(--soft),var(--soft) 8px,var(--panel) 8px,var(--panel) 16px);color:var(--ink);text-shadow:none}
+.hexline{font:700 1.4rem var(--mono);margin:6px 0}
+
+/* canvas */
+.wave{width:100%;height:270px;display:block;background:var(--bg);border:1.5px solid var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.9rem;margin:8px 0}
+.legend i{display:inline-block;width:22px;height:4px;vertical-align:middle;margin-right:6px}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 24px;margin-top:14px}
+.sliders label{display:flex;justify-content:space-between;gap:8px}
+
+/* quiz */
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:12px 0}
+.opts .btn{font-family:var(--mono);font-size:1rem}
+.opts .btn.right{background:var(--ok);border-color:var(--ok);color:#fff}
+.opts .btn.wrongp{background:var(--bad);border-color:var(--bad);color:#fff}
+.qtext{font-size:1.1rem;font-weight:500;margin-bottom:4px}
+.score{font:700 13px var(--mono);color:var(--ink2)}
+.cmp{max-width:460px;font-size:.95rem}
+ol.steps{padding-left:22px;max-width:70ch}
+ol.steps li{margin-bottom:6px}
+.checks{list-style:none;padding:0;margin:8px 0;display:grid;gap:8px}
+.checks label{display:flex;gap:10px;align-items:flex-start;font-weight:400}
+.checks input{margin-top:5px;width:18px;height:18px;accent-color:var(--accent);flex:0 0 auto}
+.tswatch{display:inline-block;width:22px;height:22px;border:2px solid var(--edge);vertical-align:middle}
+.swrow{display:inline-flex;align-items:center;gap:6px}
+
+/* report card */
+.rcard{border:3px solid var(--edge);background:var(--panel);padding:16px;max-width:680px}
+.rhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:6px 16px;border-bottom:3px solid var(--edge);padding-bottom:10px;margin-bottom:10px}
+.rtitle{font:700 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
+.rname{font:800 1.6rem/1.2 var(--body);overflow-wrap:anywhere}
+.rclass{color:var(--ink2);font-weight:500}
+.rtime{font-size:.85rem;color:var(--ink2)}
+.rtab th,.rtab td{padding:6px 8px;font-size:.95rem;vertical-align:top}
+.rtab td:first-child{font-weight:500;width:44%}
+.rtab td:last-child{font-family:var(--mono);font-size:.88rem;overflow-wrap:anywhere}
+.rtab .un{color:var(--ink2)}
+.rtab tr.grp td{background:var(--soft);font:700 12px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+footer{margin-top:48px;color:var(--ink2);font-size:.9rem}
+@media (prefers-reduced-motion: no-preference){.btn,.bitbtn{transition:background .12s,transform .08s}}
+@media (max-width:520px){.lab{padding:14px;margin-right:4px}.bits{gap:4px}.mini{grid-template-columns:repeat(8,15px)}.mini i{width:15px;height:15px}.rtab td:first-child{width:40%}}
+</style>
+
+<div class="wrap">
+
+<nav class="nav" aria-label="Етапи уроку">
+  <ul>
+    <li><a href="#warm">Розминка<small>5 хв</small></a></li>
+    <li><a href="#pixel">Піксель<small>10 хв</small></a></li>
+    <li><a href="#color">Колір<small>8 хв</small></a></li>
+    <li><a href="#sound">Звук<small>10 хв</small></a></li>
+    <li><a href="#games">Ігри<small>7 хв</small></a></li>
+    <li><a href="#practice">Практична<small>5 хв+</small></a></li>
+    <li><a href="#report">Здати<small>скріншот</small></a></li>
+  </ul>
+</nav>
+
+<header class="hero">
+  <div class="hero-text">
+    <p class="eyebrow">Інформатика · 8 клас · § 7 · 45 хвилин</p>
+    <h1>Кодування графіки та звуку</h1>
+    <p class="lead">Як закодувати двійковим кодом художнє полотно? Сьогодні ми перетворимо картинки й музику на нулі та одиниці, а потім порахуємо, скільки місця вони займають.</p>
+    <ul class="goals" aria-label="Цілі уроку">
+      <li>поясниш, що таке піксель, палітра та глибина кольору;</li>
+      <li>прочитаєш колір за кодом RGB та #rrggbb;</li>
+      <li>розкажеш, як звукову хвилю перетворюють на числа;</li>
+      <li>обчислиш обсяг зображення і звукового файлу.</li>
+    </ul>
+  </div>
+  <div class="hero-art" aria-label="Смайлик 8×8 пікселів і його двійковий код">
+    <div class="mini" id="heroGrid"></div>
+    <pre id="heroBits" aria-hidden="true"></pre>
+  </div>
+</header>
+
+<div class="lab" id="who">
+  <h3><span class="tag">Старт</span> Хто виконує урок</h3>
+  <div class="who">
+    <label for="stName">Прізвище та ім'я<input type="text" id="stName" autocomplete="name" placeholder="Петренко Олена"></label>
+    <label for="stClass">Клас<input type="text" id="stClass" placeholder="8-А"></label>
+  </div>
+  <p class="small muted" style="margin:10px 0 0">Дані потраплять у картку результатів у кінці уроку. Вони зберігаються лише в цьому браузері.</p>
+</div>
+
+<!-- ============ ЕТАП 1 ============ -->
+<section class="stage" id="warm">
+  <p class="eyebrow">Етап 1 · 5 хв</p>
+  <h2>Розминка: один байт — одне число</h2>
+  <p>На минулому уроці ми переводили числа з десяткової системи у двійкову і навпаки. Увімкни потрібні біти й набери число. Запам'ятай: у восьми бітах поміщаються числа від 0 до 255. Далі саме ці числа стануть яскравістю кольору.</p>
+  <div class="lab">
+    <h3><span class="tag">Тренажер</span> Набери число</h3>
+    <p class="small muted">Натискай на біти. Над кожним бітом його вага.</p>
+    <div class="bits" id="wBits"></div>
+    <div class="readout">
+      <span>Двійкове: <b id="wBin">00000000</b></span>
+      <span>Десяткове: <b id="wVal">0</b></span>
+      <span>Шістнадцяткове: <b id="wHex">00</b></span>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <span>Набери число <b class="num" id="wTask" style="font-size:1.4rem">0</b></span>
+      <button class="btn primary" id="wCheck" type="button">Перевірити</button>
+      <button class="btn" id="wNew" type="button">Інше число</button>
+      <button class="btn" id="wClear" type="button">Скинути біти</button>
+      <span id="wMsg" role="status"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ЕТАП 2 ============ -->
+<section class="stage" id="pixel">
+  <p class="eyebrow">Етап 2 · 10 хв</p>
+  <h2>Піксель: крапка з номером кольору</h2>
+  <p>Сканер, камера телефона й планшет бачать картинку не суцільною. Світло відбивається від аркуша й потрапляє на світлочутливі датчики, а кожна маленька крапка отримує код кольору. Така крапка називається пікселем, а їх прямокутна матриця — растром.</p>
+
+  <ol class="flow" aria-label="Як працює сканер">
+    <li><b>Світло</b>Рухомий візок із джерелом світла проходить уздовж аркуша.</li>
+    <li><b>Датчики</b>Відбите світло через дзеркала й лінзи потрапляє на датчики.</li>
+    <li><b>Код</b>Колір кожної точки перетворюється на число.<code>0110 1011</code></li>
+    <li><b>Пам'ять</b>Двійкові коди пікселів зберігаються як цифрова копія.</li>
+  </ol>
+
+  <div class="card">
+    <h3>Завдання 1. Зроби висновок</h3>
+    <p class="cloze" id="cloze">
+      Під час сканування суцільне зображення
+      <select data-ans="1" aria-label="Пропуск 1"><option value="">…</option><option value="0">стирається</option><option value="1">розбивається</option><option value="2">друкується</option></select>
+      променями світла на маленькі
+      <select data-ans="2" aria-label="Пропуск 2"><option value="">…</option><option value="0">літери</option><option value="1">кабелі</option><option value="2">пікселі</option></select>.
+      Кожен піксель має свій
+      <select data-ans="0" aria-label="Пропуск 3"><option value="">…</option><option value="0">колір</option><option value="1">запах</option><option value="2">голос</option></select>,
+      інформація про який зберігається в комп'ютері за допомогою
+      <select data-ans="2" aria-label="Пропуск 4"><option value="">…</option><option value="0">римського</option><option value="1">десяткового текстового</option><option value="2">двійкового</option></select>
+      коду.
+    </p>
+    <p id="clozeMsg" role="status" class="small"></p>
+  </div>
+
+  <div class="lab">
+    <h3><span class="tag">Лабораторія</span> Піксельний редактор</h3>
+    <p class="small muted">Малюй мишею або пальцем. Спочатку в палітрі лише 2 кольори, тож на піксель вистачає одного біта. Збільшуй глибину кольору й стеж за кодом та обсягом.</p>
+    <div class="row" role="group" aria-label="Глибина кольору">
+      <span>Глибина кольору:</span>
+      <button class="btn sm" type="button" data-depth="1" aria-pressed="true">1 біт</button>
+      <button class="btn sm" type="button" data-depth="2" aria-pressed="false">2 біти</button>
+      <button class="btn sm" type="button" data-depth="3" aria-pressed="false">3 біти</button>
+      <button class="btn sm" type="button" data-depth="4" aria-pressed="false">4 біти</button>
+    </div>
+    <div class="pal" id="pxPal" role="group" aria-label="Палітра"></div>
+    <div class="lab-cols">
+      <div class="pgrid" id="pxGrid" aria-label="Піксельне полотно 8 на 8"></div>
+      <div class="side">
+        <p class="small" style="margin-bottom:6px"><b>Двійковий код картинки</b> (кожен рядок — рядок пікселів):</p>
+        <pre class="codebox" id="pxCode"></pre>
+        <p class="stat" id="pxStat"></p>
+        <div class="row" style="margin-top:12px">
+          <button class="btn sm" id="pxSmile" type="button">Повернути смайлик</button>
+          <button class="btn sm" id="pxClear" type="button">Очистити</button>
+        </div>
+        <p class="small muted" id="pxNote" style="margin-top:8px"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="rule">
+    <p><b>Глибина кольору</b> — кількість бітів, якими кодують один піксель. Якщо вона дорівнює n бітам, у палітрі <b>2<sup>n</sup></b> кольорів.</p>
+    <p><b>Обсяг зображення</b> = кількість пікселів × глибина кольору.</p>
+  </div>
+  <div class="tablewrap">
+    <table class="cmp" aria-label="Глибина кольору й кількість кольорів">
+      <thead><tr><th>Глибина</th><th>Кольорів у палітрі</th><th>Приклад</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1 біт</td><td class="num">2</td><td>чорно-біле</td></tr>
+        <tr><td class="num">4 біти</td><td class="num">16</td><td>16-колірний BMP</td></tr>
+        <tr><td class="num">8 бітів</td><td class="num">256</td><td>256 градацій сірого</td></tr>
+        <tr><td class="num">16 бітів</td><td class="num">65 536</td><td>High Color (2 байти)</td></tr>
+        <tr><td class="num">24 біти</td><td class="num">16 777 216</td><td>True Color (3 байти)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top:34px">Растр чи вектор?</h3>
+  <p>Растрове зображення зберігає код кожного пікселя. Векторне зберігає опис фігур: яка фігура, де вона, якого розміру і кольору. Збільшуй масштаб і дивись, що станеться.</p>
+  <div class="lab">
+    <h3><span class="tag">Лупа</span> Збільшення зображення</h3>
+    <label for="zoom">Масштаб: <b class="num" id="zoomVal">1</b>×</label>
+    <input type="range" id="zoom" min="1" max="12" step="0.5" value="1">
+    <div class="zoomrow">
+      <div class="zbox">
+        <div class="zview"><div class="inner" id="zR"><canvas id="rasterCv" width="16" height="16" aria-label="Растрове коло 16 на 16 пікселів"></canvas></div></div>
+        <p class="small"><b>Растр.</b> 16 × 16 = 256 пікселів, у кожного свій код.</p>
+      </div>
+      <div class="zbox">
+        <div class="zview"><div class="inner" id="zV"><svg viewBox="0 0 16 16" aria-label="Векторне коло"><circle cx="8" cy="8" r="6" fill="#2B3AE6"/></svg></div></div>
+        <p class="small"><b>Вектор.</b> Зберігається лише опис: <code>коло, центр (8; 8), радіус 6, колір синій</code>.</p>
+      </div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card"><h3>Растр</h3><p class="small">Фотографії та малюнки з плавними переходами кольору. Формат BMP кодує без втрат, але файли великі. JPEG і PNG використовують складніше кодування, і файли зазвичай значно менші.</p></div>
+    <div class="card"><h3>Вектор</h3><p class="small">Логотипи, схеми, креслення. Зображення можна збільшувати без втрати якості, а файл малий, бо зберігає формули, а не пікселі.</p></div>
+  </div>
+</section>
+
+<!-- ============ ЕТАП 3 ============ -->
+<section class="stage" id="color">
+  <p class="eyebrow">Етап 3 · 8 хв</p>
+  <h2>Колір: три числа від 0 до 255</h2>
+  <p>Екран світиться червоним, зеленим і синім (модель RGB). Яскравість кожного кольору — число від 0 до 255, тобто один байт. Тому на один піксель True Color потрібно 3 байти, або 24 біти. Керуй мікшером і дивись на код.</p>
+
+  <div class="lab">
+    <h3><span class="tag">Мікшер</span> RGB</h3>
+    <div class="sws">
+      <div><div class="big" id="swMine"></div><div class="small muted">Твій колір</div></div>
+      <div><div class="big q" id="swTarget">?</div><div class="small muted" id="swTargetLbl">Зразок для гри</div></div>
+    </div>
+    <div class="chrow"><span class="chn r">R</span><input type="range" id="sR" min="0" max="255" value="197" aria-label="Червоний, від 0 до 255"><output class="num" id="oR"></output><div class="bn mono" id="bR"></div></div>
+    <div class="chrow"><span class="chn g">G</span><input type="range" id="sG" min="0" max="255" value="221" aria-label="Зелений, від 0 до 255"><output class="num" id="oG"></output><div class="bn mono" id="bG"></div></div>
+    <div class="chrow"><span class="chn b">B</span><input type="range" id="sB" min="0" max="255" value="86" aria-label="Синій, від 0 до 255"><output class="num" id="oB"></output><div class="bn mono" id="bB"></div></div>
+    <div class="hexline" id="hexLine"></div>
+    <p class="small muted mono" id="bitLine"></p>
+    <div class="row" style="margin-top:10px">
+      <span class="small muted">Швидкий вибір:</span>
+      <button class="btn sm" type="button" data-rgb="0,0,0">чорний</button>
+      <button class="btn sm" type="button" data-rgb="255,255,255">білий</button>
+      <button class="btn sm" type="button" data-rgb="255,0,0">червоний</button>
+      <button class="btn sm" type="button" data-rgb="0,255,0">зелений</button>
+      <button class="btn sm" type="button" data-rgb="0,0,255">синій</button>
+      <button class="btn sm" type="button" data-rgb="255,255,0">жовтий</button>
+      <button class="btn sm" type="button" data-rgb="128,128,128">сірий</button>
+    </div>
+    <hr style="border:0;border-top:1.5px solid var(--line);margin:18px 0">
+    <div class="row">
+      <b>Гра «Змішай колір»:</b>
+      <button class="btn primary sm" id="mixNew" type="button">Нове завдання</button>
+      <button class="btn sm" id="mixCheck" type="button">Перевірити</button>
+      <span id="mixMsg" role="status"></span>
+    </div>
+    <p class="small muted" style="margin:6px 0 0">Підбери повзунками такий самий колір, як у зразка. Допуск — 24 одиниці на канал. Підібрано кольорів: <span id="mixScore" class="mono">0</span></p>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <h3>Запис #rrggbb</h3>
+      <p class="small">У вебдизайні колір пишуть трьома парами шістнадцяткових цифр: <code>#rrggbb</code>. Одна пара — один байт. <code>FF</code> = <code>11111111</code> = 255. Тому <code>#FF0000</code> — чистий червоний.</p>
+    </div>
+    <div class="card">
+      <h3>Скільки кольорів?</h3>
+      <p class="small"><b>True Color</b>, 3 байти: 256³ = 2²⁴ = 16 777 216.<br><b>High Color</b>, 2 байти: 256² = 2¹⁶ = 65 536.</p>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card"><h3>RGB</h3><p class="small">Червоний, зелений, синій. Модель для екранів: кольори світять.</p></div>
+    <div class="card"><h3>CMYK</h3><p class="small">Блакитний, пурпуровий, жовтий і чорний. Модель для друку: чистий чорний змішуванням не отримати, тому його додають окремо.</p></div>
+    <div class="card"><h3>HSB</h3><p class="small">Відтінок, насиченість, яскравість. Найближча до сприйняття людським оком, зручна для малювання.</p></div>
+  </div>
+</section>
+
+<!-- ============ ЕТАП 4 ============ -->
+<section class="stage" id="sound">
+  <p class="eyebrow">Етап 4 · 10 хв</p>
+  <h2>Звук: хвиля, розрізана на сходинки</h2>
+  <p>Звук — це хвиля. Амплітуда визначає гучність, частота коливань — висоту тону. Така хвиля неперервна (аналогова), а комп'ютер працює лише з окремими числами (дискретними). Тому звук оцифровують: час ділять на малі проміжки й для кожного записують один рівень гучності.</p>
+
+  <div class="lab">
+    <h3><span class="tag">Оцифровувач</span> Хвиля → числа</h3>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>справжній звук</span>
+      <span><i style="background:var(--bad)"></i>те, що запам'ятав комп'ютер</span>
+    </div>
+    <canvas class="wave" id="wave" aria-label="Графік звукової хвилі та її оцифрованої версії"></canvas>
+    <div class="sliders">
+      <div>
+        <label for="kS"><span>Частота дискретизації</span><b class="num"><span id="kV">16</span> Гц</b></label>
+        <input type="range" id="kS" min="4" max="80" step="2" value="16">
+      </div>
+      <div>
+        <label for="nS"><span>Глибина звуку</span><b class="num"><span id="nV">3</span> біт</b></label>
+        <input type="range" id="nS" min="1" max="6" step="1" value="3">
+      </div>
+    </div>
+    <p class="stat" id="waveStat"></p>
+    <p class="small" id="waveHint" style="margin-top:6px"></p>
+    <p class="small muted">Для наочності хвиля тут дуже повільна (2 і 5 коливань за секунду), а F невелика. У справжньому звуці F = 44 100 Гц.</p>
+  </div>
+
+  <div class="rule">
+    <p><b>Частота дискретизації F</b> — скільки разів за секунду вимірюють гучність.</p>
+    <p><b>Глибина звуку N</b> — скільки бітів записують на одне вимірювання. Рівнів гучності 2<sup>N</sup>: при 16 бітах це 65 536.</p>
+    <p><b>Обсяг звукового файлу:</b> V = T · F · N · R (T — секунди, F — Гц, N — біти, R = 1 для моно, 2 для стерео).</p>
+    <p><b>Бітрейт</b> = F · N · R, вимірюють у кбіт/с (1 кбіт = 1000 біт).</p>
+  </div>
+
+  <div class="lab">
+    <h3><span class="tag">Калькулятор</span> Обсяг звукового файлу</h3>
+    <div class="row">
+      <label>T, с <input type="number" id="cT" min="1" value="60" step="1"></label>
+      <label>F, Гц
+        <select id="cF"><option>8000</option><option>11025</option><option>22050</option><option selected>44100</option><option>48000</option></select>
+      </label>
+      <label>N, біт
+        <select id="cN"><option>8</option><option selected>16</option><option>24</option></select>
+      </label>
+      <label>Запис
+        <select id="cR"><option value="1">моно (R = 1)</option><option value="2" selected>стерео (R = 2)</option></select>
+      </label>
+    </div>
+    <p class="stat" id="calcOut" style="line-height:1.9"></p>
+    <p class="small muted">За замовчуванням — хвилина якості компакт-диска. Спробуй телефонну якість: 8000 Гц, 8 біт, моно.</p>
+  </div>
+
+  <div class="card">
+    <h3>Завдання 8. Подумай</h3>
+    <p>Дві звукові доріжки мають однакову тривалість: одна — плавна хвиля, друга — складний «шумний» запис. Яка займе більший обсяг після оцифрування? Обґрунтуй відповідь, використай формулу V = T · F · N · R.</p>
+    <label for="think8" class="small muted">Твоя відповідь</label>
+    <textarea id="think8" rows="3" placeholder="Я думаю, що..." style="margin-top:6px"></textarea>
+  </div>
+</section>
+
+<!-- ============ ЕТАП 5 ============ -->
+<section class="stage" id="games">
+  <p class="eyebrow">Етап 5 · 7 хв</p>
+  <h2>Ігровий тайм</h2>
+  <p>Грай і набирай очки. Результати потраплять у картку внизу сторінки.</p>
+
+  <div class="lab">
+    <h3><span class="tag">Гра 1</span> Скільки біт?</h3>
+    <div class="score" id="aScore"></div>
+    <p class="qtext" id="aQ"></p>
+    <div class="opts" id="aOpts"></div>
+    <p id="aMsg" role="status" class="small"></p>
+    <button class="btn sm" id="aNext" type="button" hidden>Далі</button>
+  </div>
+
+  <div class="lab">
+    <h3><span class="tag">Гра 2</span> Розшифруй малюнок</h3>
+    <p class="small muted">Це 1-бітний малюнок: <b>1</b> — чорний піксель, <b>0</b> — білий. Зафарбуй клітинки за кодом і натисни «Перевірити».</p>
+    <div class="lab-cols">
+      <pre class="codebox" id="bCode" style="font-size:18px;line-height:1.6"></pre>
+      <div class="pgrid" id="bGrid" aria-label="Поле для відтворення малюнка"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary sm" id="bCheck" type="button">Перевірити</button>
+      <button class="btn sm" id="bNext" type="button">Інший малюнок</button>
+      <span id="bMsg" role="status"></span>
+    </div>
+  </div>
+
+  <div class="lab">
+    <h3><span class="tag">Гра 3</span> Читай колір за кодом</h3>
+    <div class="score" id="cScore"></div>
+    <p class="qtext">Який це колір? <span class="hexline" id="cHex" style="margin:0 0 0 8px"></span></p>
+    <div class="opts" id="cOpts"></div>
+    <div class="row"><span class="swrow" id="cSw"></span><span id="cMsg" role="status" class="small"></span></div>
+    <button class="btn sm" id="cNext" type="button" hidden style="margin-top:8px">Далі</button>
+  </div>
+
+  <div class="lab">
+    <h3><span class="tag">Гра 4</span> Правда чи ні?</h3>
+    <div class="score" id="dScore"></div>
+    <p class="qtext" id="dQ"></p>
+    <div class="row">
+      <button class="btn" id="dT" type="button">Правда</button>
+      <button class="btn" id="dF" type="button">Неправда</button>
+    </div>
+    <p id="dMsg" role="status" class="small"></p>
+    <button class="btn sm" id="dNext" type="button" hidden>Далі</button>
+  </div>
+</section>
+
+<!-- ============ ЕТАП 6 ============ -->
+<section class="stage" id="practice">
+  <p class="eyebrow">Етап 6 · 5 хв у класі, далі самостійно</p>
+  <h2>Практична робота</h2>
+  <p>Виконуй завдання по черзі. Усі результати збираються в картці внизу сторінки.</p>
+
+  <div class="lab">
+    <h3><span class="tag">Частина А</span> Таблиця кольорів (Paint)</h3>
+    <p>Впиши, який колір отримаєш для кожного набору інтенсивностей. Потім перевір себе в Paint: «Змінити колір» → введи числа.</p>
+    <div class="tablewrap">
+      <table id="colTab">
+        <thead><tr><th>Червоний</th><th>Зелений</th><th>Синій</th><th>Колір</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn primary sm" id="colCheck" type="button">Перевірити таблицю</button>
+      <span id="colMsg" role="status"></span>
+    </div>
+  </div>
+
+  <div class="lab">
+    <h3><span class="tag">Частина Б</span> Моя картинка і таблиця кодування</h3>
+    <p>Намалюй власний малюнок 12 × 12 (спочатку на полотні приклад, зафарбуй його по-своєму). Програма підрахує кольори, мінімальну глибину та складе таблицю двійкових кодів. Перепиши її в зошит.</p>
+    <div class="pal" id="mpPal" role="group" aria-label="Палітра"></div>
+    <div class="lab-cols">
+      <div class="pgrid" id="mpGrid" aria-label="Полотно 12 на 12"></div>
+      <div class="side">
+        <div class="tablewrap"><table id="mpTab"><thead><tr><th>Колір</th><th>Код</th></tr></thead><tbody></tbody></table></div>
+        <p class="stat" id="mpStat"></p>
+        <div class="row" style="margin-top:10px">
+          <button class="btn sm" id="mpClear" type="button">Чисте полотно</button>
+          <button class="btn sm" id="mpCopy" type="button">Копіювати код</button>
+          <span id="mpMsg" class="small" role="status"></span>
+        </div>
+      </div>
+    </div>
+    <label for="mpOut" class="small muted" style="display:block;margin-top:12px">Код малюнка (по рядках)</label>
+    <textarea id="mpOut" readonly rows="6" style="font-family:var(--mono);font-size:12px"></textarea>
+  </div>
+
+  <div class="lab">
+    <h3><span class="tag">Частина В</span> Три формати BMP у Paint</h3>
+    <ol class="steps">
+      <li>Відкрий Paint і намалюй зображення з кількох кольорових кіл на білому тлі.</li>
+      <li>Збережи його тричі через «Зберегти як…»: 24-розрядний BMP, 16-колірний BMP, монохромний BMP.</li>
+      <li>У властивостях файлів подивись обсяги й впиши їх нижче.</li>
+    </ol>
+    <div class="row">
+      <label>Ширина, пікс <input type="number" id="pW" value="800" min="1"></label>
+      <label>Висота, пікс <input type="number" id="pH" value="600" min="1"></label>
+    </div>
+    <div class="tablewrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>Формат</th><th>Біт на піксель</th><th>Очікую, КБ</th><th>Мій файл, КБ</th></tr></thead>
+        <tbody>
+          <tr><td>24-розрядний BMP</td><td class="num">24</td><td class="num" id="pE24"></td><td><input type="number" id="pM24" min="0" step="any" aria-label="Обсяг 24-розрядного, КБ"></td></tr>
+          <tr><td>16-колірний BMP</td><td class="num">4</td><td class="num" id="pE16"></td><td><input type="number" id="pM16" min="0" step="any" aria-label="Обсяг 16-колірного, КБ"></td></tr>
+          <tr><td>Монохромний BMP</td><td class="num">1</td><td class="num" id="pE1"></td><td><input type="number" id="pM1" min="0" step="any" aria-label="Обсяг монохромного, КБ"></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">Очікуваний обсяг = ширина × висота × біт ÷ 8 ÷ 1024. Справжній файл трохи більший через службовий заголовок.</p>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary sm" id="pCheck" type="button">Зробити висновок</button>
+      <span id="pMsg" role="status"></span>
+    </div>
+  </div>
+
+  <div class="lab">
+    <h3><span class="tag">Частина Г</span> Задачі</h3>
+    <div id="tasks" style="display:grid;gap:16px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Частина Д. Власні думки</h3>
+    <label for="refl">Які переваги та недоліки має растрова графіка порівняно з векторною? Запиши 2–3 речення.</label>
+    <textarea id="refl" rows="4" placeholder="Растрова графіка..." style="margin-top:8px"></textarea>
+  </div>
+
+  <h3 style="margin-top:28px">Що я зробив(-ла)</h3>
+  <ul class="checks" id="checks">
+    <li><label><input type="checkbox" data-k="a"> Заповнив(-ла) таблицю кольорів RGB</label></li>
+    <li><label><input type="checkbox" data-k="b"> Створив(-ла) малюнок і записав(-ла) таблицю кодування в зошит</label></li>
+    <li><label><input type="checkbox" data-k="c"> Зберіг(-ла) зображення у трьох форматах BMP й порівняв(-ла) обсяги</label></li>
+    <li><label><input type="checkbox" data-k="d"> Розв'язав(-ла) усі чотири задачі</label></li>
+    <li><label><input type="checkbox" data-k="e"> Відповів(-ла) на питання про растр і вектор</label></li>
+  </ul>
+</section>
+
+<!-- ============ ЗДАТИ ============ -->
+<section class="stage" id="report">
+  <p class="eyebrow">Фінал · здай роботу</p>
+  <h2>Моя картка результатів</h2>
+  <p>Перевір, що вгорі сторінки вписано ім'я та клас. Картка оновлюється сама. Коли закінчиш, зроби скріншот усієї картки й надішли вчителю. Якщо скріншот не виходить, натисни «Копіювати текстом» і вставте результат у повідомлення.</p>
+
+  <div class="rcard" id="rcard">
+    <div class="rhead">
+      <div>
+        <div class="rtitle">Інформатика · § 7 · Кодування графіки та звуку</div>
+        <div class="rname" id="rName"></div>
+        <div class="rclass" id="rClass"></div>
+      </div>
+      <div class="rtime mono" id="rTime"></div>
+    </div>
+    <table class="rtab" aria-label="Результати уроку">
+      <tbody id="rBody"></tbody>
+    </table>
+  </div>
+  <div class="row" style="margin-top:14px">
+    <button class="btn primary" id="rCopy" type="button">Копіювати текстом</button>
+    <span id="rMsg" class="small" role="status"></span>
+  </div>
+</section>
+
+<footer>Матеріал спирається на § 7 «Кодування графіки та звуку», підручник з інформатики для 8 класу.</footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var bin=function(n,w){return n.toString(2).padStart(w,'0')};
+var fmt=function(n,d){return n.toLocaleString('uk-UA',{maximumFractionDigits:d===undefined?2:d})};
+var rnd=function(n){return Math.floor(Math.random()*n)};
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=rnd(i+1);var t=a[i];a[i]=a[j];a[j]=t}return a}
+var store={
+  get:function(k,d){try{var v=localStorage.getItem('kgz:'+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+  set:function(k,v){try{localStorage.setItem('kgz:'+k,JSON.stringify(v))}catch(e){}}
+};
+function say(el,text,cls){el.textContent=text;el.className=cls||''}
+var RES={};
+
+/* ---------- спільна сітка пікселів ---------- */
+function makeGrid(root,n,colorOf,paint){
+  root.style.setProperty('--n',n);
+  root.innerHTML='';
+  var cells=[];
+  for(var i=0;i<n*n;i++){var d=document.createElement('div');d.className='cell';d.setAttribute('data-i',i);root.appendChild(d);cells.push(d)}
+  var down=false;
+  function hit(e,first){
+    var t=document.elementFromPoint(e.clientX,e.clientY);
+    if(t&&t.parentNode===root&&t.getAttribute('data-i')!==null)paint(+t.getAttribute('data-i'),first);
+  }
+  root.addEventListener('pointerdown',function(e){down=true;hit(e,true);e.preventDefault()});
+  root.addEventListener('pointermove',function(e){if(down)hit(e,false)});
+  window.addEventListener('pointerup',function(){down=false});
+  window.addEventListener('pointercancel',function(){down=false});
+  return {refresh:function(){cells.forEach(function(c,i){c.style.background=colorOf(i)})}};
+}
+
+var PAL=[
+  ['#FFFFFF','білий'],['#000000','чорний'],['#E53935','червоний'],['#1E5BE0','синій'],
+  ['#2E9E4F','зелений'],['#FFD21F','жовтий'],['#FF8A1F','помаранчевий'],['#8E3FD1','фіолетовий'],
+  ['#FF8FB1','рожевий'],['#7A4A21','коричневий'],['#20C3D6','блакитний'],['#9AA0A6','сірий'],
+  ['#0B5D2A','темно-зелений'],['#0D1B6B','темно-синій'],['#C7E86A','салатовий'],['#E6B8A2','тілесний']
+];
+var SMILE=['00111100','01000010','10100101','10000001','10100101','10011001','01000010','00111100'];
+
+/* ---------- герой ---------- */
+(function(){
+  var g=$('#heroGrid');
+  SMILE.forEach(function(row){row.split('').forEach(function(ch){var i=document.createElement('i');if(ch==='1')i.className='on';g.appendChild(i)})});
+  $('#heroBits').textContent=SMILE.join('\n');
+})();
+
+/* ---------- розминка ---------- */
+(function(){
+  var W=[128,64,32,16,8,4,2,1],bits=[0,0,0,0,0,0,0,0],target=0,counted=-1,box=$('#wBits');
+  W.forEach(function(w,i){
+    var b=document.createElement('button');b.type='button';b.className='bitbtn';
+    b.setAttribute('aria-pressed','false');b.setAttribute('aria-label','Біт з вагою '+w);
+    b.innerHTML='<span class="w">'+w+'</span><span class="v">0</span>';
+    b.addEventListener('click',function(){bits[i]^=1;upd()});
+    box.appendChild(b);
+  });
+  function val(){return bits.reduce(function(s,b,i){return s+b*W[i]},0)}
+  function upd(){
+    $$('.bitbtn',box).forEach(function(b,i){b.querySelector('.v').textContent=bits[i];b.setAttribute('aria-pressed',bits[i]?'true':'false')});
+    var v=val();
+    $('#wVal').textContent=v;
+    $('#wHex').textContent=v.toString(16).toUpperCase().padStart(2,'0');
+    $('#wBin').textContent=bin(v,8);
+  }
+  function newT(){var t;do{t=1+rnd(255)}while(t===target);target=t;$('#wTask').textContent=t;say($('#wMsg'),'')}
+  $('#wCheck').addEventListener('click',function(){
+    var v=val();
+    if(v===target){
+      say($('#wMsg'),'Правильно! '+target+' = '+bin(target,8),'ok');
+      if(counted!==target){counted=target;RES.warm=(RES.warm||0)+1}
+    }else say($('#wMsg'),'Зараз набрано '+v+'. Спробуй ще.','bad');
+  });
+  $('#wNew').addEventListener('click',newT);
+  $('#wClear').addEventListener('click',function(){bits=[0,0,0,0,0,0,0,0];upd()});
+  newT();upd();
+})();
+
+/* ---------- заповни пропуски ---------- */
+(function(){
+  var sel=$$('#cloze select');
+  function chk(){
+    var ok=0,all=true;
+    sel.forEach(function(s){
+      s.classList.remove('right','wrong');
+      if(s.value==='')all=false;
+      else if(s.value===s.getAttribute('data-ans')){s.classList.add('right');ok++}
+      else s.classList.add('wrong');
+    });
+    RES.cloze=ok+' з '+sel.length;
+    var m=$('#clozeMsg');
+    if(ok===sel.length)say(m,'Усе правильно! Так працює сканер.','ok');
+    else if(all)say(m,'Є помилки, спробуй змінити червоні відповіді.','bad');
+    else say(m,'');
+  }
+  sel.forEach(function(s){s.addEventListener('change',chk)});
+})();
+
+/* ---------- піксельна лабораторія ---------- */
+(function(){
+  var N=8,depth=1,sel=1,data=new Uint8Array(N*N);
+  function smile(){SMILE.forEach(function(row,r){row.split('').forEach(function(ch,c){data[r*N+c]=ch==='1'?1:0})})}
+  smile();
+  var grid=makeGrid($('#pxGrid'),N,function(i){return PAL[data[i]][0]},function(i){data[i]=sel;upd()});
+  function pal(){
+    var box=$('#pxPal');box.innerHTML='';
+    for(var i=0;i<Math.pow(2,depth);i++){
+      (function(i){
+        var b=document.createElement('button');b.type='button';b.className='sw';
+        b.setAttribute('aria-pressed',i===sel?'true':'false');
+        b.setAttribute('aria-label',PAL[i][1]+', код '+bin(i,depth));
+        b.innerHTML='<i style="background:'+PAL[i][0]+'"></i><span>'+bin(i,depth)+'</span>';
+        b.addEventListener('click',function(){sel=i;pal()});
+        box.appendChild(b);
+      })(i);
+    }
+  }
+  function upd(){
+    grid.refresh();
+    var lines=[];
+    for(var r=0;r<N;r++){var g=[];for(var c=0;c<N;c++)g.push(bin(data[r*N+c],depth));lines.push(g.join(' '))}
+    $('#pxCode').textContent=lines.join('\n');
+    var total=N*N*depth;
+    $('#pxStat').innerHTML='<b>'+(N*N)+'</b> пікселів × <b>'+depth+'</b> '+(depth===1?'біт':'біти')+' = <b>'+total+'</b> біт = <b>'+fmt(total/8)+'</b> байт<br>Кольорів у палітрі: <b>'+Math.pow(2,depth)+'</b>';
+  }
+  $$('[data-depth]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var d=+b.getAttribute('data-depth'),lost=0;
+      if(d<depth){var lv=Math.pow(2,d);for(var i=0;i<data.length;i++)if(data[i]>=lv){data[i]=0;lost++}}
+      depth=d;if(sel>=Math.pow(2,depth))sel=1;
+      RES.depth=Math.max(RES.depth||1,d);
+      $$('[data-depth]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});
+      $('#pxNote').textContent=lost?('Кольорів, яких немає в новій палітрі, стало менше: '+lost+' пікселів стали білими. Так працює зменшення глибини.'):'';
+      pal();upd();
+    });
+  });
+  $('#pxSmile').addEventListener('click',function(){data.fill(0);smile();upd()});
+  $('#pxClear').addEventListener('click',function(){data.fill(0);upd()});
+  pal();upd();
+})();
+
+/* ---------- растр і вектор ---------- */
+(function(){
+  var cv=$('#rasterCv'),x=cv.getContext('2d');
+  x.fillStyle='#2B3AE6';
+  for(var j=0;j<16;j++)for(var i=0;i<16;i++){
+    var dx=i+0.5-8,dy=j+0.5-8;
+    if(dx*dx+dy*dy<=36)x.fillRect(i,j,1,1);
+  }
+  var z=$('#zoom');
+  function upd(){
+    var v=+z.value;$('#zoomVal').textContent=v;
+    $('#zR').style.transform='scale('+v+')';
+    $('#zV').style.transform='scale('+v+')';
+  }
+  z.addEventListener('input',upd);upd();
+})();
+
+/* ---------- RGB-мікшер ---------- */
+var mix=(function(){
+  var ids=['R','G','B'],sl=ids.map(function(c){return $('#s'+c)});
+  function get(){return sl.map(function(s){return +s.value})}
+  function upd(){
+    var v=get();
+    $('#swMine').style.background='rgb('+v.join(',')+')';
+    ids.forEach(function(c,i){$('#o'+c).textContent=v[i];$('#b'+c).textContent=bin(v[i],8)+' = '+v[i].toString(16).toUpperCase().padStart(2,'0')});
+    $('#hexLine').textContent='#'+v.map(function(n){return n.toString(16).padStart(2,'0')}).join('').toUpperCase();
+    $('#bitLine').textContent=v.map(function(n){return bin(n,8)}).join(' ')+'  (24 біти = 3 байти)';
+  }
+  sl.forEach(function(s){s.addEventListener('input',upd)});
+  $$('[data-rgb]').forEach(function(b){b.addEventListener('click',function(){
+    var v=b.getAttribute('data-rgb').split(',').map(Number);
+    sl.forEach(function(s,i){s.value=v[i]});upd();
+  })});
+  upd();
+  return {get:get};
+})();
+
+/* ---------- гра «Змішай колір» ---------- */
+(function(){
+  var T=[
+    ['помаранчевий',[255,128,0]],['фіолетовий',[128,0,128]],['бірюзовий',[0,128,128]],
+    ['рожевий',[255,192,203]],['оливковий',[128,128,0]],['темно-сірий',[64,64,64]],
+    ['золотий',[255,215,0]],['бордовий',[128,0,32]],['лавандовий',[200,160,255]]
+  ];
+  var cur=null,score=0,last=-1;
+  function newT(){
+    var i;do{i=rnd(T.length)}while(i===last);last=i;cur=T[i];
+    var sw=$('#swTarget');sw.className='big';sw.textContent='';sw.style.background='rgb('+cur[1].join(',')+')';
+    $('#swTargetLbl').textContent='Зразок: який це колір?';
+    say($('#mixMsg'),'');
+  }
+  $('#mixNew').addEventListener('click',newT);
+  $('#mixCheck').addEventListener('click',function(){
+    var m=$('#mixMsg');
+    if(!cur){say(m,'Спочатку натисни «Нове завдання».','warnc');return}
+    var v=mix.get(),names=['червоного','зеленого','синього'],hint=[];
+    v.forEach(function(x,i){var d=x-cur[1][i];if(Math.abs(d)>24)hint.push(d>0?'забагато '+names[i]:'замало '+names[i])});
+    if(!hint.length){
+      score++;$('#mixScore').textContent=score;RES.mix=score;
+      say(m,'Влучно! Це '+cur[0]+': ('+cur[1].join(', ')+').','ok');
+      $('#swTargetLbl').textContent=cur[0];
+      cur=null;
+    }else say(m,'Ще ні: '+hint.join(', ')+'.','bad');
+  });
+})();
+
+/* ---------- оцифровування звуку ---------- */
+(function(){
+  var cv=$('#wave'),kS=$('#kS'),nS=$('#nS');
+  function f(t){return 0.65*Math.sin(2*Math.PI*2*t)+0.3*Math.sin(2*Math.PI*5*t+0.6)}
+  function draw(){
+    var dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;
+    if(!W)return;
+    if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr)}
+    var x=cv.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+    var cs=getComputedStyle(document.documentElement);
+    var col=function(n){return cs.getPropertyValue(n).trim()};
+    var K=+kS.value,n=+nS.value,L=Math.pow(2,n);
+    var pl=38,pr=10,pt=12,pb=24,w=W-pl-pr,h=H-pt-pb;
+    var X=function(t){return pl+t*w},Y=function(v){return pt+(1-(v+1)/2)*h};
+    x.lineWidth=1;x.strokeStyle=col('--gridline');x.fillStyle=col('--ink2');x.font='11px '+col('--mono');
+    for(var q=0;q<L;q++){var yy=Y(q/(L-1)*2-1);x.beginPath();x.moveTo(pl,yy);x.lineTo(pl+w,yy);x.stroke()}
+    x.textAlign='right';x.textBaseline='middle';
+    x.fillText('макс',pl-4,Y(1));x.fillText('мін',pl-4,Y(-1));
+    x.textAlign='center';x.textBaseline='top';
+    for(var s=0;s<=2;s++){x.fillText((s*0.5)+' с',X(s/2),H-pb+6)}
+    x.strokeStyle=col('--edge');x.lineWidth=1.5;x.beginPath();x.moveTo(pl,pt);x.lineTo(pl,pt+h);x.lineTo(pl+w,pt+h);x.stroke();
+    x.strokeStyle=col('--accent');x.lineWidth=2.5;x.beginPath();
+    for(var i=0;i<=w;i++){var t=i/w;var px=X(t),py=Y(f(t));if(i===0)x.moveTo(px,py);else x.lineTo(px,py)}
+    x.stroke();
+    var qv=function(v){return Math.round((v+1)/2*(L-1))/(L-1)*2-1};
+    x.strokeStyle=col('--bad');x.lineWidth=2;x.beginPath();
+    for(var k=0;k<K;k++){
+      var vq=qv(f(k/K));
+      if(k===0)x.moveTo(X(0),Y(vq));else x.lineTo(X(k/K),Y(vq));
+      x.lineTo(X((k+1)/K),Y(vq));
+    }
+    x.stroke();
+    x.fillStyle=col('--bad');
+    for(var k2=0;k2<K;k2++){x.beginPath();x.arc(X(k2/K),Y(qv(f(k2/K))),K>50?2:3.2,0,6.283);x.fill()}
+  }
+  function upd(){
+    var K=+kS.value,n=+nS.value;
+    $('#kV').textContent=K;$('#nV').textContent=n;
+    $('#waveStat').innerHTML='Вимірювань за секунду: <b>'+K+'</b> · рівнів гучності: <b>2<sup>'+n+'</sup> = '+Math.pow(2,n)+'</b><br>Одна секунда (моно) = '+K+' × '+n+' = <b>'+(K*n)+'</b> біт';
+    var m;
+    if(K<12)m='Менше 12 вимірювань на секунду: швидкі коливання пропадають, форма хвилі спотворена.';
+    else if(n<=2)m='Лише '+Math.pow(2,n)+' рівні гучності: хвиля схожа на грубі сходинки.';
+    else if(K>=40&&n>=5)m='Червона лінія майже збігається із синьою. Звук точний, але даних багато.';
+    else m='Підвищ частоту дискретизації або глибину, і сходинки стануть дрібнішими.';
+    $('#waveHint').textContent=m;
+    draw();
+  }
+  kS.addEventListener('input',upd);nS.addEventListener('input',upd);
+  window.addEventListener('resize',draw);
+  try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw)}catch(e){}
+  try{new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']})}catch(e){}
+  upd();
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw);
+})();
+
+/* ---------- калькулятор обсягу звуку ---------- */
+(function(){
+  function upd(){
+    var T=Math.max(0,+$('#cT').value||0),F=+$('#cF').value,N=+$('#cN').value,R=+$('#cR').value;
+    var bits=T*F*N*R,bytes=bits/8;
+    $('#calcOut').innerHTML=
+      'Бітрейт F·N·R = '+fmt(F)+' · '+N+' · '+R+' = <b>'+fmt(F*N*R/1000,1)+' кбіт/с</b><br>'+
+      'V = T·F·N·R = '+fmt(T)+' · '+fmt(F)+' · '+N+' · '+R+' = <b>'+fmt(bits,0)+' біт</b><br>'+
+      '= <b>'+fmt(bytes,0)+' байт</b> ≈ <b>'+fmt(bytes/1024,1)+' КБ</b> ≈ <b>'+fmt(bytes/1048576,2)+' МБ</b>';
+  }
+  ['#cT','#cF','#cN','#cR'].forEach(function(s){$(s).addEventListener('input',upd);$(s).addEventListener('change',upd)});
+  upd();
+})();
+
+/* ---------- гра 1: скільки біт ---------- */
+(function(){
+  var round=0,score=0,streak=0,best=0,total=10,correct=0,locked=false;
+  function bar(){$('#aScore').textContent='Питання '+Math.min(round+1,total)+' з '+total+' · очки: '+score+' · серія: '+streak}
+  function q(){
+    locked=false;$('#aNext').hidden=true;say($('#aMsg'),'');
+    var n=1+rnd(8),ask,opts;
+    if(Math.random()<0.5){
+      ask='Глибина кольору — '+n+' '+(n===1?'біт':(n<5?'біти':'бітів'))+'. Скільки кольорів у палітрі?';
+      correct=Math.pow(2,n);
+      opts=[correct,n*2,n*n+1,Math.pow(2,n+1),Math.max(2,correct/2),n*10];
+    }else{
+      ask='У палітрі '+Math.pow(2,n)+' '+(n===1?'кольори':'кольорів')+'. Скільки бітів потрібно на один піксель?';
+      correct=n;
+      opts=[n,n+1,Math.max(1,n-1),n+2,Math.pow(2,n),Math.pow(2,n)/2];
+    }
+    var uniq=[correct];
+    shuffle(opts).forEach(function(o){if(uniq.length<4&&uniq.indexOf(o)<0&&o>0)uniq.push(o)});
+    $('#aQ').textContent=ask;
+    var box=$('#aOpts');box.innerHTML='';
+    shuffle(uniq).forEach(function(o){
+      var b=document.createElement('button');b.type='button';b.className='btn';b.textContent=fmt(o,0);
+      b.addEventListener('click',function(){pick(b,o)});box.appendChild(b);
+    });
+    bar();
+  }
+  function pick(b,o){
+    if(locked)return;locked=true;
+    if(o===correct){b.classList.add('right');score+=10+Math.min(streak,5);streak++;best=Math.max(best,streak);say($('#aMsg'),'Правильно!','ok')}
+    else{b.classList.add('wrongp');streak=0;$$('#aOpts .btn').forEach(function(x){if(x.textContent===fmt(correct,0))x.classList.add('right')});say($('#aMsg'),'Не зовсім. Правильна відповідь підсвічена.','bad')}
+    round++;
+    RES.a=score+' очок, питань: '+round+' з '+total;
+    var nx=$('#aNext');nx.hidden=false;
+    if(round>=total){nx.textContent='Зіграти ще раз';$('#aScore').textContent='Готово! Очки: '+score+' · найкраща серія: '+best}
+    else{nx.textContent='Далі';bar()}
+  }
+  $('#aNext').addEventListener('click',function(){if(round>=total){round=0;score=0;streak=0;best=0}q()});
+  q();
+})();
+
+/* ---------- гра 2: розшифруй малюнок ---------- */
+(function(){
+  var P=[
+    ['серце',['01100110','11111111','11111111','11111111','01111110','00111100','00011000','00000000']],
+    ['смайлик',SMILE],
+    ['будиночок',['00011000','00111100','01111110','11111111','11111111','11100111','11100111','11100111']]
+  ];
+  var cur=0,user=new Uint8Array(64),mode=1,solved={};
+  var grid=makeGrid($('#bGrid'),8,function(i){return user[i]?'#000':'#fff'},function(i,first){
+    if(first)mode=user[i]?0:1;
+    user[i]=mode;grid.refresh();
+  });
+  function load(){
+    user.fill(0);grid.refresh();
+    $('#bCode').textContent=P[cur][1].join('\n');
+    say($('#bMsg'),'');
+  }
+  function diff(){var d=0;P[cur][1].forEach(function(row,r){row.split('').forEach(function(ch,c){if((+ch)!==user[r*8+c])d++})});return d}
+  $('#bCheck').addEventListener('click',function(){
+    var d=diff();
+    if(d===0){say($('#bMsg'),'Ідеально! Це '+P[cur][0]+'.','ok');solved[cur]=1;RES.b=Object.keys(solved).length+' з '+P.length}
+    else say($('#bMsg'),'Не збігається клітинок: '+d+'.','bad');
+  });
+  $('#bNext').addEventListener('click',function(){cur=(cur+1)%P.length;load()});
+  load();
+})();
+
+/* ---------- гра 3: читай колір ---------- */
+(function(){
+  var C=[
+    ['#FF0000','червоний'],['#00FF00','зелений'],['#0000FF','синій'],['#FFFF00','жовтий'],
+    ['#FF00FF','пурпуровий'],['#00FFFF','блакитний'],['#FFFFFF','білий'],['#000000','чорний'],
+    ['#808080','сірий'],['#FF8000','помаранчевий']
+  ];
+  var score=0,n=0,cur=null,locked=false,lastI=-1;
+  function q(){
+    locked=false;$('#cNext').hidden=true;say($('#cMsg'),'');$('#cSw').innerHTML='';
+    var i;do{i=rnd(C.length)}while(i===lastI);lastI=i;cur=C[i];
+    $('#cHex').textContent=cur[0];
+    var names=[cur[1]];
+    shuffle(C.map(function(c){return c[1]})).forEach(function(nm){if(names.length<4&&names.indexOf(nm)<0)names.push(nm)});
+    var box=$('#cOpts');box.innerHTML='';
+    shuffle(names).forEach(function(nm){
+      var b=document.createElement('button');b.type='button';b.className='btn';b.style.fontFamily='var(--body)';b.textContent=nm;
+      b.addEventListener('click',function(){pick(b,nm)});box.appendChild(b);
+    });
+    $('#cScore').textContent='Правильно: '+score+' з '+n;
+  }
+  function pick(b,nm){
+    if(locked)return;locked=true;n++;
+    $('#cSw').innerHTML='<span class="tswatch" style="background:'+cur[0]+'"></span>';
+    if(nm===cur[1]){score++;b.classList.add('right');say($('#cMsg'),'Так! '+cur[0]+' — '+cur[1]+'.','ok')}
+    else{b.classList.add('wrongp');$$('#cOpts .btn').forEach(function(x){if(x.textContent===cur[1])x.classList.add('right')});say($('#cMsg'),'Ні, це '+cur[1]+'. Подивись, які пари дорівнюють FF, а які 00.','bad')}
+    $('#cScore').textContent='Правильно: '+score+' з '+n;
+    RES.c=score+' з '+n;
+    $('#cNext').hidden=false;
+  }
+  $('#cNext').addEventListener('click',q);
+  q();
+})();
+
+/* ---------- гра 4: правда чи ні ---------- */
+(function(){
+  var S=[
+    ['Для кодування звуку час ділять на дрібні проміжки, і для кожного зберігається амплітуда.',true,'Саме так: це дискретизація.'],
+    ['Існують лише двійкова, вісімкова, десяткова та шістнадцяткова системи числення.',false,'Систем безліч, наприклад трійкова чи римська.'],
+    ['Для кодування будь-якої інформації в комп’ютері використовують десяткову систему.',false,'Комп’ютер використовує двійкову систему.'],
+    ['Під час кодування зображення поділяється на пікселі, кожен має один колір, що позначається унікальним кодом.',true,'Так працює растрова графіка.'],
+    ['Якщо глибина кольору 8 бітів, у палітрі 8 кольорів.',false,'Кольорів 2⁸ = 256.'],
+    ['Стереозапис потребує вдвічі більше місця, ніж моно (за однакових F і N).',true,'Бо R = 2.']
+  ];
+  var order=shuffle(S.map(function(_,i){return i})),idx=0,score=0,done=0,locked=false;
+  function q(){
+    locked=false;$('#dNext').hidden=true;say($('#dMsg'),'');
+    $('#dQ').textContent=S[order[idx]][0];
+    $('#dScore').textContent='Правильно: '+score+' з '+done;
+  }
+  function ans(v){
+    if(locked)return;locked=true;done++;
+    var s=S[order[idx]];
+    if(v===s[1]){score++;say($('#dMsg'),'Правильно. '+s[2],'ok')}else say($('#dMsg'),'Ні. '+s[2],'bad');
+    $('#dScore').textContent='Правильно: '+score+' з '+done;
+    RES.d=score+' з '+done;
+    $('#dNext').hidden=false;
+  }
+  $('#dT').addEventListener('click',function(){ans(true)});
+  $('#dF').addEventListener('click',function(){ans(false)});
+  $('#dNext').addEventListener('click',function(){idx=(idx+1)%order.length;q()});
+  q();
+})();
+
+/* ---------- практична: таблиця кольорів ---------- */
+(function(){
+  var R=[[0,0,0,/чорн/],[0,255,0,/зелен/],[255,0,0,/червон/],[0,0,255,/син/],[255,255,255,/біл/],[128,128,128,/сір/]];
+  var tb=$('#colTab tbody');
+  R.forEach(function(r,i){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td class="num">'+r[0]+'</td><td class="num">'+r[1]+'</td><td class="num">'+r[2]+'</td>'+
+      '<td><input type="text" id="colIn'+i+'" aria-label="Колір для ('+r[0]+', '+r[1]+', '+r[2]+')" style="width:150px"></td><td id="colRes'+i+'"></td>';
+    tb.appendChild(tr);
+  });
+  $('#colCheck').addEventListener('click',function(){
+    var ok=0,filled=0;
+    R.forEach(function(r,i){
+      var v=$('#colIn'+i).value.trim().toLowerCase(),td=$('#colRes'+i);
+      if(!v){td.innerHTML='';return}
+      filled++;
+      var good=r[3].test(v);
+      if(good)ok++;
+      td.innerHTML=(good?'<span class="ok">✓</span> ':'<span class="bad">✗</span> ')+'<span class="tswatch" style="background:rgb('+r[0]+','+r[1]+','+r[2]+')"></span>';
+    });
+    RES.col=ok+' з '+R.length+' правильно';
+    if(ok===R.length)say($('#colMsg'),'Усе правильно. Нулі — кольору немає, 255 — максимум, однакові числа дають сірий.','ok');
+    else say($('#colMsg'),'Правильно: '+ok+' з '+R.length+'. Рядки з ✗ перевір у Paint.','warnc');
+  });
+})();
+
+/* ---------- практична: моя картинка ---------- */
+(function(){
+  var N=12,data=new Uint8Array(N*N),sel=1,touched=false;
+  function demo(){
+    data.fill(10);
+    for(var r=9;r<12;r++)for(var c=0;c<N;c++)data[r*N+c]=4;
+    for(var r2=6;r2<9;r2++){data[r2*N+5]=9;data[r2*N+6]=9}
+    for(var r3=2;r3<6;r3++)for(var c3=3;c3<9;c3++)data[r3*N+c3]=12;
+    for(var r4=1;r4<3;r4++)for(var c4=9;c4<11;c4++)data[r4*N+c4]=5;
+  }
+  demo();
+  var grid=makeGrid($('#mpGrid'),N,function(i){return PAL[data[i]][0]},function(i){data[i]=sel;touched=true;upd()});
+  function pal(){
+    var box=$('#mpPal');box.innerHTML='';
+    PAL.forEach(function(p,i){
+      var b=document.createElement('button');b.type='button';b.className='sw';
+      b.setAttribute('aria-pressed',i===sel?'true':'false');b.setAttribute('aria-label',p[1]);b.title=p[1];
+      b.innerHTML='<i style="background:'+p[0]+'"></i>';
+      b.addEventListener('click',function(){sel=i;pal()});box.appendChild(b);
+    });
+  }
+  function upd(){
+    grid.refresh();
+    var used=[];for(var i=0;i<data.length;i++)if(used.indexOf(data[i])<0)used.push(data[i]);
+    used.sort(function(a,b){return a-b});
+    var k=used.length,n=Math.max(1,Math.ceil(Math.log2(k)));
+    var code={};used.forEach(function(u,j){code[u]=bin(j,n)});
+    var tb=$('#mpTab tbody');tb.innerHTML='';
+    used.forEach(function(u){
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td><span class="swrow"><span class="tswatch" style="background:'+PAL[u][0]+'"></span>'+PAL[u][1]+'</span></td><td class="num">'+code[u]+'</td>';
+      tb.appendChild(tr);
+    });
+    var bits=N*N*n;
+    if(touched)RES.mp='кольорів: '+k+', глибина: '+n+' біт, обсяг: '+bits+' біт ('+fmt(bits/8)+' байт)';
+    $('#mpStat').innerHTML='Кольорів у малюнку: <b>'+k+'</b><br>Мінімальна глибина: <b>'+n+'</b> '+(n===1?'біт':(n<5?'біти':'бітів'))+' (2<sup>'+n+'</sup> = '+Math.pow(2,n)+' ≥ '+k+')<br>Обсяг: '+(N*N)+' × '+n+' = <b>'+bits+'</b> біт = <b>'+fmt(bits/8)+'</b> байт';
+    var out=['Таблиця кодування:'];
+    used.forEach(function(u){out.push(PAL[u][1]+' = '+code[u])});
+    out.push('','Код малюнка:');
+    for(var r=0;r<N;r++){var row=[];for(var c=0;c<N;c++)row.push(code[data[r*N+c]]);out.push(row.join(' '))}
+    $('#mpOut').value=out.join('\n');
+  }
+  $('#mpClear').addEventListener('click',function(){data.fill(0);touched=true;upd()});
+  $('#mpCopy').addEventListener('click',function(){
+    var ta=$('#mpOut'),m=$('#mpMsg');
+    function fallback(){ta.focus();ta.select();say(m,'Виділено. Натисни Ctrl+C.','warnc')}
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(ta.value).then(function(){say(m,'Скопійовано','ok')},fallback);
+      else fallback();
+    }catch(e){fallback()}
+  });
+  pal();upd();
+})();
+
+/* ---------- практична: формати BMP ---------- */
+(function(){
+  var wI=$('#pW'),hI=$('#pH');
+  function est(){
+    var w=Math.max(1,+wI.value||0),h=Math.max(1,+hI.value||0);
+    $('#pE24').textContent=fmt(w*h*24/8/1024,1);
+    $('#pE16').textContent=fmt(w*h*4/8/1024,1);
+    $('#pE1').textContent=fmt(w*h*1/8/1024,1);
+  }
+  wI.addEventListener('input',est);hI.addEventListener('input',est);est();
+  $('#pCheck').addEventListener('click',function(){
+    var a=+$('#pM24').value,b=+$('#pM16').value,c=+$('#pM1').value,m=$('#pMsg');
+    if(!(a>0&&b>0&&c>0)){say(m,'Впиши всі три обсяги.','warnc');return}
+    RES.bmp=fmt(a,1)+' / '+fmt(b,1)+' / '+fmt(c,1)+' КБ'+((a>b&&b>c)?' ✓ порядок вірний':' ✗ порядок хибний');
+    if(a>b&&b>c)say(m,'Висновок: що більше кольорів у зображенні, то більший обсяг файлу, оскільки на кодування кожного пікселя потрібно більше бітів. У тебе 24-розрядний більший за 16-колірний у '+fmt(a/b,1)+' раза, а той — за монохромний у '+fmt(b/c,1)+' раза.','ok');
+    else say(m,'Порядок має бути таким: 24-розрядний > 16-колірний > монохромний. Перевір обсяги й повтори збереження.','bad');
+  });
+})();
+
+/* ---------- практична: задачі ---------- */
+(function(){
+  var T=[
+    {q:'Кожен піксель растрового зображення 800 × 600 кодують 1 байтом. Який обсяг BMP-файлу у КБ (1 КБ = 1024 байти)?',ans:[468.75,480],tol:0.6,unit:'КБ'},
+    {q:'Малюнок 16 × 16 пікселів містить 16 кольорів. Скільки байтів потрібно для його збереження?',ans:[128],tol:0.5,unit:'байт'},
+    {q:'Моно-запис триває 10 с, F = 8000 Гц, N = 8 біт. Скільки байтів займе файл?',ans:[80000],tol:1,unit:'байт'},
+    {q:'Знайди бітрейт CD-якості: F = 44 100 Гц, N = 16 біт, стерео. Скільки кбіт/с (1 кбіт = 1000 біт)?',ans:[1411.2],tol:1,unit:'кбіт/с'}
+  ];
+  var box=$('#tasks');
+  T.forEach(function(t,i){
+    var d=document.createElement('div');
+    d.innerHTML='<p style="margin-bottom:8px"><b>'+(i+1)+'.</b> '+t.q+'</p>'+
+      '<div class="row"><input type="number" id="tk'+i+'" step="any" aria-label="Відповідь до задачі '+(i+1)+'"> <span class="muted">'+t.unit+'</span>'+
+      '<button class="btn primary sm" type="button" id="tkc'+i+'">Перевірити</button><span id="tkm'+i+'" role="status"></span></div>';
+    box.appendChild(d);
+    $('#tkc'+i).addEventListener('click',function(){
+      var raw=$('#tk'+i).value;
+      if(raw===''){say($('#tkm'+i),'Впиши число.','warnc');return}
+      var v=+raw,ok=t.ans.some(function(a){return Math.abs(v-a)<=Math.max(t.tol,Math.abs(a)*0.003)});
+      RES['t'+i]=fmt(v,2)+' '+t.unit+(ok?' ✓':' ✗');
+      say($('#tkm'+i),ok?'Правильно!':'Ще ні. Перевір, чи перейшов(-ла) від бітів до байтів.',ok?'ok':'bad');
+    });
+  });
+})();
+
+/* ---------- чекліст, роздуми, відповідь до завдання 8 ---------- */
+(function(){
+  var saved=store.get('checks',{}),boxes=$$('#checks input');
+  boxes.forEach(function(b){
+    b.checked=!!saved[b.getAttribute('data-k')];
+    b.addEventListener('change',function(){saved[b.getAttribute('data-k')]=b.checked;store.set('checks',saved)});
+  });
+  [['#refl','refl'],['#think8','t8']].forEach(function(p){
+    var el=$(p[0]);el.value=store.get(p[1],'');
+    el.addEventListener('input',function(){store.set(p[1],el.value)});
+  });
+})();
+
+/* ---------- картка результатів ---------- */
+(function(){
+  var nameI=$('#stName'),clsI=$('#stClass');
+  nameI.value=store.get('name','');clsI.value=store.get('cls','');
+  function clip(s,n){s=(s||'').replace(/\s+/g,' ').trim();return s.length>n?s.slice(0,n)+'…':s}
+  function rows(){
+    var checked=$$('#checks input').filter(function(b){return b.checked}).length;
+    var u='—';
+    var r=[
+      ['g','Етап 1–2'],
+      ['Розминка: правильно набрано чисел',String(RES.warm||0)],
+      ['Завдання 1 (пропуски)',RES.cloze||u],
+      ['Піксельний редактор: найбільша глибина',RES.depth?RES.depth+' '+(RES.depth<5?'біти':'бітів'):'не пробував(-ла)'],
+      ['g','Етап 3'],
+      ['«Змішай колір»: підібрано кольорів',String(RES.mix||0)],
+      ['g','Етап 4'],
+      ['Завдання 8 (відповідь)',clip($('#think8').value,200)||u],
+      ['g','Етап 5. Ігри'],
+      ['Гра 1. Скільки біт?',RES.a||u],
+      ['Гра 2. Розшифруй малюнок',RES.b||'0 з 3'],
+      ['Гра 3. Читай колір',RES.c||u],
+      ['Гра 4. Правда чи ні',RES.d||u],
+      ['g','Етап 6. Практична'],
+      ['А. Таблиця кольорів',RES.col||u],
+      ['Б. Моя картинка',RES.mp||'не змінено'],
+      ['В. Обсяги BMP (24-бітний / 16-колірний / монохромний)',RES.bmp||u],
+      ['Г. Задача 1',RES.t0||u],
+      ['Г. Задача 2',RES.t1||u],
+      ['Г. Задача 3',RES.t2||u],
+      ['Г. Задача 4',RES.t3||u],
+      ['Д. Растр і вектор (відповідь)',clip($('#refl').value,240)||u],
+      ['Чекліст виконано',checked+' з '+$$('#checks input').length]
+    ];
+    return r;
+  }
+  function render(){
+    var nm=nameI.value.trim(),cl=clsI.value.trim();
+    store.set('name',nameI.value);store.set('cls',clsI.value);
+    var nEl=$('#rName');nEl.textContent=nm||'Ім’я не вказано';
+    $('#rClass').textContent=cl?(cl+' клас'):'клас не вказано';
+    $('#rTime').textContent=new Date().toLocaleString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    var body=$('#rBody');body.innerHTML='';
+    rows().forEach(function(r){
+      var tr=document.createElement('tr');
+      if(r[0]==='g'){tr.className='grp';var td=document.createElement('td');td.colSpan=2;td.textContent=r[1];tr.appendChild(td)}
+      else{
+        var a=document.createElement('td'),b=document.createElement('td');
+        a.textContent=r[0];b.textContent=r[1];
+        if(r[1]==='—'||r[1]==='не змінено'||r[1]==='не пробував(-ла)')b.className='un';
+        tr.appendChild(a);tr.appendChild(b);
+      }
+      body.appendChild(tr);
+    });
+  }
+  ['input','change','click','pointerup','keyup'].forEach(function(ev){document.addEventListener(ev,render)});
+  $('#rCopy').addEventListener('click',function(){
+    render();
+    var lines=['Інформатика, § 7. Кодування графіки та звуку','Учень: '+($('#rName').textContent)+', '+($('#rClass').textContent),$('#rTime').textContent,''];
+    rows().forEach(function(r){lines.push(r[0]==='g'?'\n'+r[1].toUpperCase():r[0]+': '+r[1])});
+    var text=lines.join('\n'),m=$('#rMsg');
+    function fallback(){
+      var ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;opacity:0';
+      document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand('copy')}catch(e){}
+      document.body.removeChild(ta);
+      say(m,ok?'Скопійовано':'Не вдалося скопіювати. Зроби скріншот картки.',ok?'ok':'warnc');
+    }
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(function(){say(m,'Скопійовано. Встав у повідомлення вчителю.','ok')},fallback);
+      else fallback();
+    }catch(e){fallback()}
+  });
+  render();
+})();
+
+})();
+</script>
+
+</body></html>
